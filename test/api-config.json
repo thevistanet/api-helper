@@ -1,0 +1,40 @@
+[
+  {
+    "id": "sec_login",
+    "category": "Auth",
+    "title": "Login / Token",
+    "endpoint": "/api/Auth/{action}",
+    "method": "GET",
+    "fields": [
+      { "id": "action", "label": "Action", "type": "select", "options": [{"val": "login", "text": "login"}, {"val": "login2", "text": "login2"}, {"val": "logout", "text": "logout"}], "col": "col-md-3", "isPath": true },
+      { "id": "uid", "label": "User ID", "type": "text", "query": "uid", "col": "col-md-3" },
+      { "id": "pwd", "label": "Password", "type": "password", "query": "pwd", "col": "col-md-3" },
+      { "id": "role", "label": "Role (r)", "type": "text", "query": "r", "col": "col-md-3" },
+      { "id": "lang", "label": "Language", "type": "select", "options": [{"val": "th", "text": "TH"}, {"val": "en", "text": "EN"}], "query": "_lg", "col": "col-md-2" },
+      { "id": "cc", "label": "Company Code", "type": "text", "query": "_cc", "col": "col-md-2" }
+    ]
+  },
+  {
+    "id": "sec_tables",
+    "category": "Data",
+    "title": "Resources (Tables)",
+    "endpoint": "/api/Auth/resources",
+    "method": "GET",
+    "fields": [
+      { "id": "type", "label": "Type", "type": "select", "options": [{"val": "tables", "text": "tables"}, {"val": "process", "text": "process"}], "query": "type", "col": "col-md-4" },
+      { "id": "file", "label": "File", "type": "select", "options": [{"val": "tables.json", "text": "tables.json"}, {"val": "processes.json", "text": "processes.json"}], "query": "file", "col": "col-md-4" },
+      { "id": "cc2", "label": "Company Code", "type": "text", "query": "_cc", "col": "col-md-4" }
+    ]
+  },
+  {
+    "id": "sec_columns",
+    "category": "Data",
+    "title": "Columns & Filters",
+    "endpoint": "/api/Data/{operation}",
+    "method": "GET",
+    "fields": [
+      { "id": "operation", "label": "Operation", "type": "select", "options": [{"val": "columns", "text": "columns"}, {"val": "filters", "text": "filters"}], "col": "col-md-4", "isPath": true },
+      { "id": "tableid", "label": "Table ID (_t)", "type": "text", "query": "_t", "placeholder": "Enter Table ID", "col": "col-md-4" }
+    ]
+  }
+]

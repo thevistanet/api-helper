@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VistaERP2 API Helper</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h1 id="brandTitle">VistaERP2 API</h1>
+        <p id="brandSub">Loading…</p>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div style="margin-top:auto;padding:14px 20px;font-size:11px;color:var(--text-faint)" id="copyright"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div class="field">
+          <label for="baseUrl">Base URL</label>
+          <input type="text" id="baseUrl" placeholder="https://host">
+        </div>
+        <div class="field">
+          <label for="appId" title="_aa — sent on REST (v2) calls">_aa</label>
+          <input type="text" id="appId" placeholder="vistaerp2.020201.web" style="width:180px">
+        </div>
+        <div class="field">
+          <label for="lang">_lg</label>
+          <select id="lang"><option value="th">th</option><option value="en">en</option></select>
+        </div>
+        <div class="session-chip" id="sessionChip" title="Active session token">
+          <span>session</span><b id="sessionVal">no session</b>
+        </div>
+      </div>
+      <div class="content">
+        <div id="content"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+{
+  "meta": {
+    "title": "VistaERP2 API Helper",
+    "subtitle": "Interactive tester for the VistaERP2 backend",
+    "copyright": "Vista Computing System",
+    "apiBase": "/api",
+    "helpMarker": "/help"
+  },
+  "groups": [
+    {
+      "id": "auth",
+      "label": "Authentication",
+      "icon": "key",
+      "endpoints": [
+        {
+          "id": "login",
+          "label": "Login / Session",
+          "title": "Auth / login",
+          "description": "Open a session. login2 & login3 return a session token (s) that every other call reuses.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Auth/{op}",
+          "onSuccess": "authenticated",
+          "fields": [
+            { "key": "op", "label": "operation", "type": "select", "in": "path", "options": ["login", "login2", "login3", "logout", "language", "token"], "default": "login2" },
+            { "key": "uid", "label": "uid", "type": "text", "param": "uid", "width": 90 },
+            { "key": "pwd", "label": "pwd", "type": "password", "param": "pwd", "width": 90 },
+            { "key": "r", "label": "role", "type": "text", "param": "r", "width": 70 },
+            { "key": "cc", "label": "_cc", "type": "text", "param": "_cc", "width": 70, "bind": "cc" },
+            { "key": "lg", "label": "_lg", "type": "select", "param": "_lg", "options": ["th", "en"], "default": "th", "bind": "lang" },
+            { "key": "app", "label": "app", "type": "text", "param": "app", "width": 70 },
+            { "key": "ste_id", "label": "ste_id", "type": "text", "param": "ste_id", "width": 70 },
+            { "key": "s", "label": "s", "type": "session", "param": "s" }
+          ],
+          "result": { "mode": "json" }
+        }
+      ]
+    },
+    {
+      "id": "resources",
+      "label": "Resources",
+      "icon": "list",
+      "endpoints": [
+        {
+          "id": "tables",
+          "label": "Tables / Processes / Reports",
+          "title": "Auth / resources",
+          "description": "List all resources of a given type. These feed the dropdowns used everywhere else.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Auth/resources",
+          "needsSession": true,
+          "fields": [
+            { "key": "type", "label": "type", "type": "select", "param": "type", "options": ["tables", "process", "report"], "default": "tables" },
+            { "key": "file", "label": "file", "type": "select", "param": "file", "options": ["tables.json", "processes.json", "reports.json"], "default": "tables.json" },
+            { "key": "cc", "label": "_cc", "type": "text", "param": "_cc", "width": 70, "bind": "cc" }
+          ],
+          "result": { "mode": "keyedTable", "labelKey": "label", "onlyDisplay": true }
+        },
+        {
+          "id": "dataResources",
+          "label": "Data resources (files)",
+          "title": "Data / resources",
+          "description": "Browse resource files stored on the server. Leave path empty for the root list.",
+          "method": "POST",
+          "flow": "request",
+          "path": "/api/Data/resources{path}",
+          "needsSession": true,
+          "fields": [
+            { "key": "path", "label": "path", "type": "text", "in": "path", "width": 240, "placeholder": "/subfolder" }
+          ],
+          "result": { "mode": "resourceLinks", "linkBase": "/api/Data/resources" }
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "label": "Data",
+      "icon": "table",
+      "endpoints": [
+        {
+          "id": "columns",
+          "label": "Columns / Filters / Model",
+          "title": "Data / columns",
+          "description": "Inspect the column, filter or full model metadata of a table.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/{op}",
+          "needsSession": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["columns", "filters", "model"], "default": "columns" },
+            { "key": "_t", "label": "table", "type": "resource", "param": "_t", "resource": "tables", "required": true }
+          ],
+          "result": { "mode": "columns" }
+        },
+        {
+          "id": "list",
+          "label": "List / Lookup / Export / Get",
+          "title": "Data / list",
+          "description": "Query rows. export / get open a download in a new tab; list / lookup render a grid.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/{op}",
+          "needsSession": true,
+          "downloadWhen": { "op": ["export", "get"] },
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["list", "lookup", "export", "get"], "default": "list" },
+            { "key": "_t", "label": "table", "type": "resource", "param": "_t", "resource": "tables", "required": true },
+            { "key": "filter", "label": "filter", "type": "raw", "width": 200, "placeholder": "field=value" },
+            { "key": "_rs", "label": "_rs", "type": "text", "param": "_rs", "default": "20", "width": 55 },
+            { "key": "_pi", "label": "_pi", "type": "text", "param": "_pi", "default": "0", "width": 55 },
+            { "key": "_st", "label": "_st", "type": "text", "param": "_st", "width": 90, "placeholder": "sort" }
+          ],
+          "result": { "mode": "records" }
+        },
+        {
+          "id": "info",
+          "label": "Info / New / Copy (CRUD)",
+          "title": "Data / info",
+          "description": "Load one record into an editable form. info → update/delete, new/copy → insert. Callout buttons fire server-side callouts.",
+          "method": "GET",
+          "flow": "record",
+          "path": "/api/Data/{op}",
+          "needsSession": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["info", "new", "copy"], "default": "info" },
+            { "key": "_t", "label": "table", "type": "resource", "param": "_t", "resource": "tables", "required": true },
+            { "key": "pk", "label": "primary key", "type": "raw-field", "width": 110, "placeholder": "pk field" },
+            { "key": "pkv", "label": "value", "type": "raw-value", "width": 90, "placeholder": "value" }
+          ]
+        },
+        {
+          "id": "tree",
+          "label": "Tree",
+          "title": "Data / tree",
+          "description": "Fetch a hierarchical tree resource.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/tree",
+          "needsSession": true,
+          "fields": [
+            { "key": "_t", "label": "table", "type": "select", "param": "_t", "options": ["c_salesregion", "ad_menu"], "default": "c_salesregion" }
+          ],
+          "result": { "mode": "json", "showLink": true }
+        },
+        {
+          "id": "treemove",
+          "label": "Tree move",
+          "title": "Data / tree (move)",
+          "description": "Re-parent a node inside a tree.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/tree",
+          "needsSession": true,
+          "fixed": { "_action": "move" },
+          "fields": [
+            { "key": "_t", "label": "table", "type": "select", "param": "_t", "options": ["c_salesregion"], "default": "c_salesregion" },
+            { "key": "id", "label": "node id", "type": "text", "param": "id", "width": 90 },
+            { "key": "parent", "label": "parent", "type": "text", "param": "parent", "width": 90 }
+          ],
+          "result": { "mode": "json", "showLink": true }
+        }
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Process",
+      "icon": "play",
+      "endpoints": [
+        {
+          "id": "process",
+          "label": "Process (filters → execute)",
+          "title": "Process / filters",
+          "description": "Load the parameter form of a process, fill it, then build the execute URL.",
+          "method": "GET",
+          "flow": "filters",
+          "path": "/api/Process/filters",
+          "needsSession": true,
+          "execute": { "path": "/api/Process/execute", "mode": "show" },
+          "fields": [
+            { "key": "_t", "label": "process", "type": "resource", "param": "_t", "resource": "processes", "required": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "report",
+      "label": "Report",
+      "icon": "file",
+      "endpoints": [
+        {
+          "id": "report",
+          "label": "Report (filters → execute)",
+          "title": "Report / filters",
+          "description": "Load the parameter form of a report, fill it, then download it as PDF/XLSX.",
+          "method": "GET",
+          "flow": "filters",
+          "path": "/api/Report/filters",
+          "needsSession": true,
+          "execute": { "path": "/api/Report/execute", "mode": "download", "format": ["pdf", "xlsx", "xls"], "lang": true },
+          "fields": [
+            { "key": "_t", "label": "report", "type": "resource", "param": "_t", "resource": "reports", "required": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "grid",
+      "endpoints": [
+        {
+          "id": "dashboard",
+          "label": "Dashboard model",
+          "title": "Dashboard / model",
+          "description": "Fetch a dashboard model definition.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Dashboard/model",
+          "needsSession": true,
+          "fields": [
+            { "key": "_t", "label": "dashboard id", "type": "text", "param": "_t", "width": 120 }
+          ],
+          "result": { "mode": "json", "showLink": true }
+        }
+      ]
+    },
+    {
+      "id": "voyager",
+      "label": "Voyager",
+      "icon": "upload",
+      "endpoints": [
+        {
+          "id": "voyager",
+          "label": "Voyager put / get",
+          "title": "Voyager / put",
+          "description": "Bulk push (put) or pull (get) a JSON document.",
+          "method": "POST",
+          "flow": "request",
+          "path": "/api/Voyager/{op}",
+          "needsSession": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["put", "get"], "default": "put" },
+            { "key": "data", "label": "data", "type": "textarea", "param": "data", "rows": 14, "default": "{\n  \"tables\": {\n    \"data\": [\"status\", \"pumps\", \"hoses\"],\n    \"status\": [\"sta_id\", \"db\", \"pi\"],\n    \"pumps\": [\"sta_id\", \"pump_id\", \"status\"],\n    \"hoses\": [\"sta_id\", \"hose_id\", \"hose_number\", \"pump_id\", \"grade_id\", \"tank_id\", \"volume\", \"money\"]\n  },\n  \"status\": [[1, 1, 1]],\n  \"pumps\": [[1, 1, \"20\"], [1, 2, \"20\"], [1, 3, \"10\"], [1, 4, \"20\"]],\n  \"hoses\": [[1, 1, 1, 1, 1, 1, 12345.30, 3344, 50], [1, 2, 2, 1, 1, 1, 34552.34, 33452.45]]\n}" }
+          ],
+          "result": { "mode": "json" }
+        }
+      ]
+    },
+    {
+      "id": "admin",
+      "label": "Admin",
+      "icon": "cog",
+      "endpoints": [
+        {
+          "id": "logs",
+          "label": "Logs",
+          "title": "Admin / logs",
+          "description": "Browse server logs. Leave path empty for the index, then click a file.",
+          "method": "POST",
+          "flow": "request",
+          "path": "/api/Admin/logs{path}",
+          "needsSession": true,
+          "fields": [
+            { "key": "path", "label": "path", "type": "text", "in": "path", "prefix": "/", "width": 200, "placeholder": "file name" }
+          ],
+          "result": { "mode": "resourceLinks", "linkBase": "/api/Admin/logs", "listMode": "table" }
+        },
+        {
+          "id": "config",
+          "label": "Config",
+          "title": "Admin / config",
+          "description": "Show or set runtime configuration flags.",
+          "method": "POST",
+          "flow": "request",
+          "path": "/api/Admin/config/{op}",
+          "needsSession": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["show", "set", "refresh"], "default": "show" },
+            { "key": "kk", "label": "key", "type": "select", "options": ["debug", "MA", "ERROR_NOROW", "ERROR_PAGING", "PAGESIZE"], "default": "debug", "keyParam": true },
+            { "key": "vv", "label": "value", "type": "text", "width": 120, "valueFor": "kk" }
+          ],
+          "result": { "mode": "json" }
+        },
+        {
+          "id": "util",
+          "label": "Util (encrypt / decrypt)",
+          "title": "Admin / util",
+          "description": "enz encrypts, dez decrypts the p1 payload.",
+          "method": "POST",
+          "flow": "request",
+          "path": "/api/Admin/util/{op}",
+          "needsSession": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["enz", "dez"], "default": "enz" },
+            { "key": "p1", "label": "p1", "type": "textarea", "param": "p1", "rows": 3, "encode": true }
+          ],
+          "result": { "mode": "json" }
+        }
+      ]
+    },
+    {
+      "id": "restdata",
+      "label": "REST · Data",
+      "icon": "table",
+      "endpoints": [
+        {
+          "id": "dashboardModel2",
+          "label": "Dashboard model",
+          "title": "Data / Dashboard / model",
+          "description": "New REST dashboard model. Response: { issuccess, message, data }.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Dashboard/model",
+          "needsSession": true,
+          "v2": true,
+          "fields": [],
+          "result": { "mode": "json" }
+        },
+        {
+          "id": "model2",
+          "label": "Table model",
+          "title": "Data / model / <table>",
+          "description": "Metadata for a table: title, pks, paging, permission, filters and reports.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/model/{table}",
+          "needsSession": true,
+          "v2": true,
+          "fields": [
+            { "key": "table", "label": "table", "type": "text", "in": "path", "width": 170, "placeholder": "sms_job", "required": true }
+          ],
+          "result": { "mode": "model" }
+        },
+        {
+          "id": "list2",
+          "label": "List",
+          "title": "Data / list / <table>",
+          "description": "Query rows. GET sends filters as query params, POST as a JSON body. Filters go in the params object.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/list/{table}",
+          "needsSession": true,
+          "v2": true,
+          "tableParam": "table",
+          "fields": [
+            { "key": "table", "label": "table", "type": "text", "in": "path", "width": 170, "placeholder": "sms_job", "required": true },
+            { "key": "params", "label": "params (JSON)", "type": "json", "rows": 6, "default": "{\n  \"_rs\": 50,\n  \"_pi\": 0\n}" }
+          ],
+          "result": { "mode": "records" }
+        },
+        {
+          "id": "lookup2",
+          "label": "Lookup",
+          "title": "Data / lookup / <table>",
+          "description": "id/name pairs for dropdowns and for rendering id / popup fields.",
+          "method": "GET",
+          "flow": "request",
+          "path": "/api/Data/lookup/{table}",
+          "needsSession": true,
+          "v2": true,
+          "tableParam": "table",
+          "fields": [
+            { "key": "table", "label": "table", "type": "text", "in": "path", "width": 170, "placeholder": "sms_job_status", "required": true },
+            { "key": "params", "label": "params (JSON)", "type": "json", "rows": 4, "default": "{}" }
+          ],
+          "result": { "mode": "records" }
+        },
+        {
+          "id": "export2",
+          "label": "Export (xlsx)",
+          "title": "Data / export / <table>",
+          "description": "Download the list as Excel. Fetched with the Bearer header, then saved as a file.",
+          "method": "GET",
+          "flow": "download",
+          "path": "/api/Data/export/{table}",
+          "needsSession": true,
+          "v2": true,
+          "tableParam": "table",
+          "download": { "filename": "export.xlsx" },
+          "fields": [
+            { "key": "table", "label": "table", "type": "text", "in": "path", "width": 170, "placeholder": "sms_job", "required": true },
+            { "key": "params", "label": "params (JSON)", "type": "json", "rows": 5, "default": "{\n  \"_rs\": 50,\n  \"_pi\": 0\n}" }
+          ]
+        },
+        {
+          "id": "record2",
+          "label": "Record (new / info / CRUD)",
+          "title": "Data / new|info / <table>",
+          "description": "Load an empty (new) or existing (info) record, edit it, then insert / update / delete via JSON POST.",
+          "method": "GET",
+          "flow": "recordV2",
+          "path": "/api/Data/{op}/{table}",
+          "needsSession": true,
+          "v2": true,
+          "fields": [
+            { "key": "op", "label": "op", "type": "select", "in": "path", "options": ["info", "new"], "default": "info" },
+            { "key": "table", "label": "table", "type": "text", "in": "path", "width": 170, "placeholder": "sms_job", "required": true },
+            { "key": "id", "label": "id", "type": "text", "param": "id", "width": 90, "placeholder": "record id" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "restpr",
+      "label": "REST · Process / Report",
+      "icon": "play",
+      "endpoints": [
+        {
+          "id": "process2",
+          "label": "Process (model → execute)",
+          "title": "Process / model / <process>",
+          "description": "Load a process parameter form, fill it, then execute via JSON POST. Returns a message in data.info.",
+          "method": "GET",
+          "flow": "filtersV2",
+          "path": "/api/Process/model/{process}",
+          "needsSession": true,
+          "v2": true,
+          "execute": { "path": "/api/Process/execute/{process}", "mode": "json" },
+          "fields": [
+            { "key": "process", "label": "process", "type": "text", "in": "path", "width": 200, "placeholder": "job_mileage_start", "required": true }
+          ]
+        },
+        {
+          "id": "report2",
+          "label": "Report (model → execute)",
+          "title": "Report / model / <report>",
+          "description": "Load a report parameter form, fill it, then download the PDF (fetched with the Bearer header).",
+          "method": "GET",
+          "flow": "filtersV2",
+          "path": "/api/Report/model/{report}",
+          "needsSession": true,
+          "v2": true,
+          "execute": { "path": "/api/Report/execute/{report}", "mode": "download", "filename": "report.pdf" },
+          "fields": [
+            { "key": "report", "label": "report", "type": "text", "in": "path", "width": 200, "placeholder": "service_report", "required": true }
+          ]
+        }
+      ]
+    }
+  ]
+}

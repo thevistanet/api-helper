@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>VistaERP2 API</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  
+  <style>
+    .yellow {background-color:yellow}
+    .readonly {background-color:#cfcfcf}
+    /* Set height of the grid so .sidenav can be 100% (adjust if needed) */
+    .row.content {height: 1500px}
+    
+    /* Set gray background color and 100% height */
+    .sidenav {
+      background-color: #f1f1f1;
+      height: 100%;
+    }
+    
+    /* Set black background color, white text and some padding */
+    footer {
+      background-color: #555;
+      color: white;
+      padding: 15px;
+    }
+    
+    /* On small screens, set height to 'auto' for sidenav and grid */
+    @media screen and (max-width: 767px) {
+      .sidenav {
+        height: auto;
+        padding: 15px;
+      }
+      .row.content {height: auto;} 
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <div class="row content">
+    <div class="col-sm-3 sidenav" >
+      <h4>VistaERP2 API</h4>
+      <ul class="nav nav-pills nav-stacked">
+        <li><a class="menu" data="#sec_login">Auth/login</a></li>
+        <li><a class="menu" data="#sec_tables">Auth/Tables(Process,Report)</a></li>
+        <li><a class="menu" data="#sec_columns">Data/columns(filters,model)</a></li>
+        <li><a class="menu" data="#sec_vgres">Data/resources</a></li>
+        <li><a class="menu" data="#sec_list">Data/list(lookup,export,get)</a></li>
+        <li><a class="menu" data="#sec_info">Data/info(new,copy)</a></li>
+        <li><a class="menu" data="#sec_tree">Data/tree</a></li>
+        <li><a class="menu" data="#sec_treemove">Data/tree/move</a></li>
+        <li><a class="menu" data="#sec_process_col">Process/filters(execute)</a></li>
+        <li style="display:none"><a class="menu" data="#sec_process_exec">Process/execute</a></li>
+        <li><a class="menu" data="#sec_report_col">Report/filters(execute)</a></li>
+        <li style="display:none"><a class="menu" data="#sec_report_exec">Report/execute</a></li>
+        <li style="display:none"><a class="menu" data="#sec_reports">Reports</a></li>
+        <li><a class="menu" data="#sec_dashboard">Dashboard/model</a></li>
+        <li><a class="menu" data="#sec_vg">Voyager/put(get)</a></li>
+        <li><a class="menu" data="#sec_logs">Admin/logs</a></li>
+        <li><a class="menu" data="#sec_config">Admin/config</a></li>
+        <li><a class="menu" data="#sec_util">Admin/util</a></li>
+      </ul><br>
+    </div>
+
+   	<h4>URL: <input type="text" id="url" style="width:300px"/></h4>
+   	<input type="hidden" id="cmd"/>
+   	<input type="hidden" id="j_columns"/>
+   	<input type="hidden" id="j_info"/>
+    <div class="col-sm-9" id="sec_login" id="top">
+		<h3>VistaERP2 API: Data/login</h3>
+		<div>
+			/api/Auth/
+			<select id="t_login" class="yellow">
+				<option selected>login</option>
+				<option>login2</option>
+				<option>login3</option>
+				<option>logout</option>
+				<option>language</option>
+				<option>token</option>
+			</select> 
+			<span>?uid=</span><input id="uid" type="text" style="width:40px" class="yellow"/>
+			<span>&pwd=</span><input id="pwd" type="text" style="width:40px" class="yellow"/>
+			<span>&r=</span><input id="role" type="text" style="width:30px" class="yellow"/>
+			<span>&_cc=</span><input id="cc" type="text" style="width:40px" class="yellow"/>
+			<span>&_lg=</span><select id="lang" type="text" class="yellow">
+				<option value="th" selected>th</option>
+				<option value="en">en</option>
+			</select>
+			<span>&s=</span><input id="s0" class="yellow" type="text"/>
+			<span>&app=</span><input id="app" type="text" style="width:40px" class="yellow"/>
+			<span>&ste_id=</span><input id="ste_id" type="text" style="width:40px" class="yellow"/>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_login">Submit</button>
+			<br/>
+		</div>
+		
+		<div id="jsonlogin"></div>
+	</div>
+
+    <div class="col-sm-9" id="sec_tables">
+		<h3>VistaERP2 API: Auth/resources?type=tables <a href="#top">(top)</a></h3>
+		<div>
+			/api/Auth/resources?type=
+			<select id="op_tables" name="op_tables">
+				<option>tables</option>
+				<option>process</option>
+				<option>report</option>
+			</select>
+			&file=
+			<select id="op_tables2" name="op_tables">
+				<option>tables.json</option>
+				<option>processes.json</option>
+				<option>reports.json</option>
+			</select>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_tables">Submit</button>
+		</div>
+		
+		<div id="jsontables"></div>
+	</div>
+
+    <div class="col-sm-9" id="sec_columns">
+		<h3>VistaERP2 API: Data/columns <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/
+			<select id="col_op" class="yellow">
+				<option selected>columns</option>
+				<option>filters</option>
+				<option>model</option>
+			</select>	
+			?_t= 
+			<select id="tableid" class="yellow tables">
+			</select>	
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_column">Submit</button>
+			<span class="t_tablename"></span>
+			<br/>
+		</div>
+		
+		<div id="jsonreturn"></div>
+	</div>
+    
+    <div class="col-sm-9" id="sec_list">
+		<h3>VistaERP2 API: Data/list(lookup/export) <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/
+			<select id="op2" class="yellow">
+				<option value="list" selected>list</option>
+				<option value="lookup">lookup</option>				
+				<option value="export">export</option>				
+				<option value="get">get</option>				
+			</select>				 
+			?_t= 
+			<select id="tableid2" class="yellow tables">
+			</select>	
+			&<input type="text" id="f2_1" style="width:150px" placeholder="field name" class="yellow"/>
+			
+			&_rs=<input type="text" id="rs_2" style="width:30px" value="20" placeholder="rows" class="yellow"/>
+			&_pi=<input type="text" id="pi_2" style="width:30px" value="0" placeholder="page" class="yellow"/>
+			&_st=<input type="text" id="st_2" style="width:50px" value="" placeholder="sort" class="yellow"/>
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_list">Submit</button>
+			<span class="t_tablename"></span>
+			<br/>
+		</div>
+		<div>
+			<ul class="nav nav-tabs">
+			    <li class="active"><a data-toggle="tab" href="#home2">Columns</a></li>
+			    <li><a data-toggle="tab" href="#menu1_2">Source</a></li>
+			  </ul>
+			
+			  <div class="tab-content">
+			    <div id="home2" class="tab-pane fade in active">
+			     <div id="jsonreturn2_2"></div>
+			    </div>
+			    <div id="menu1_2" class="tab-pane fade">
+			      <div id="jsonreturn2"></div>
+			    </div>
+			  </div>
+      
+		</div>
+						
+	</div>
+    
+    <div class="col-sm-9" id="sec_info">
+		<h3>VistaERP2 API: Data/info(new,copy) <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/
+			<select id="op3" class="yellow">
+				<option value="info" selected>info</option>
+				<option value="new">new</option>				
+				<option value="copy">copy</option>				
+			</select>				
+			?_t= 
+			<select id="tableid3" class="yellow tables">
+			</select>	
+			&<input type="text" id="f3_1" style="width:75px" placeholder="primary key" class="yellow"/>
+			=<input type="text" id="f3_2" style="width:50px" placeholder="value" class="yellow"/>
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_info">Submit</button>
+			<span class="t_tablename"></span>
+			<br/>
+		</div>
+		<div>
+			<ul class="nav nav-tabs">
+			    <li class="active"><a data-toggle="tab" href="#home">Columns</a></li>
+			    <li><a data-toggle="tab" href="#menu1">Source</a></li>
+			  </ul>
+			
+			  <div class="tab-content">
+			    <div id="home" class="tab-pane fade in active">
+			     <div id="jsonreturn3_2"></div>
+				     <div id="save">
+					     <button type="button" class="btn btn-success" id="b_insert">insert</button>
+					     <button type="button" class="btn btn-success" id="b_update">update</button>
+					     <button type="button" class="btn btn-danger" id="b_delete">delete</button>
+				     </div>
+			    </div>
+			    <div id="menu1" class="tab-pane fade">
+			      <div id="jsonreturn3"></div>
+			    </div>
+			  </div>
+      
+		</div>
+	  </div>      
+
+<div class="col-sm-9" id="sec_process_col">
+		<h3>VistaERP2 API: Process/filters<a href="#top">(top)</a></h3>
+		<div>
+			/api/Process/filters?_t= 
+			<select id="processid" class="yellow process">
+			</select>	
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_process_col">Submit</button>
+			<br/>
+		</div>
+		<div>
+			<div id="jsonprocess_col0"></div>
+			<div id="jsonprocess_col"></div>
+		    <button type="button" class="btn btn-success" id="b_process_exec">execute</button>
+		</div>	
+	</div>
+<div class="col-sm-9" id="sec_process_exec">
+		<h3>VistaERP2 API: Process/execute <a href="#top">(top)</a></h3>
+		<div>
+			/api/Process/execute?_t= 
+			<select id="processid2" class="yellow process">
+			</select>	
+			&<input type="text" id="process_pm" name="process_pm"/>
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_process_exec">Submit</button>
+			<br/>
+		</div>
+		<div id="jsonprocess_exec0"></div>
+		<div id="jsonprocess_exec"></div>
+	</div>
+<div class="col-sm-9" id="sec_report_col">
+		<h3>VistaERP2 API: Report/filters<a href="#top">(top)</a></h3>
+		<div>
+			/api/Report/filters?_t= 
+			<select id="reportid" class="yellow report">
+			</select>	
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_report_col">Submit</button>
+			<br/>
+		</div>
+		<div>
+			<div id="jsonreport_col0"></div>		
+			<div id="jsonreport_col"></div>
+		    <button type="button" class="btn btn-success" id="b_report_exec">execute</button>
+			<select id="report_ct" class="yellow">
+				<option selected>pdf</option>
+				<option>xlsx</option>
+			</select>			    
+		</div>
+	</div>
+<div class="col-sm-9" id="sec_report_exec">
+		<h3>VistaERP2 API: Report/execute <a href="#top">(top)</a></h3>
+		<div>
+			/api/Report/execute?_t= 
+			<select id="reportid2" class="yellow report">
+			</select>	
+			&_ct=
+			<select id="report_ct" class="yellow">
+				<option>pdf</option>
+				<option>xlsx</option>
+				<option>xls</option>
+			</select>				
+			&<input type="text" id="report_pm" name="report_pm"/>
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_report_exec">Submit</button>
+			<br/>
+		</div>
+		<div id="jsonreport_exec"></div>
+	</div>		
+<div class="col-sm-9" id="sec_tree">
+		<h3>VistaERP2 API: Data/tree <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/tree?_t=
+			<select id="op_tree" class="yellow">
+				<option value="c_salesregion" selected>c_salesregion</option>
+				<option value="ad_menu">ad_menu</option>				
+			</select>				
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_tree">Submit</button>
+			<br/>
+		</div>
+		<div>			
+			<div id="jsonreturn_tree0"></div>
+		     <div id="jsonreturn_tree"></div>      
+		</div>
+	  </div>      	 
+	<div class="col-sm-9" id="sec_treemove">
+		<h3>VistaERP2 API: Data/tree/move <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/tree?_action=move&_t=
+			<select id="op_treemove" class="yellow">
+				<option value="c_salesregion" selected>c_salesregion</option>
+			</select>				
+			&id=<input type="text" id="node_id"/>
+			&parent=<input type="text" id="parent"/>
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_treemove">Submit</button>
+			<br/>
+		</div>
+		<div>			
+			<div id="jsonreturn_treemove0"></div>
+		     <div id="jsonreturn_treemove"></div>      
+		</div>
+	  </div>      
+	<div class="col-sm-9" id="sec_dashboard">
+		<h3>VistaERP2 API: Dashboard/model <a href="#top">(top)</a></h3>
+		<div>
+			/api/Dashboard/model?_t=<input type="text" id="dashboard_id"/>		
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_dashboard">Submit</button>
+			<br/>
+		</div>
+		<div>			
+			<div id="jsonreturn_dash"></div>
+		</div>
+	  </div>      	 
+	  	  	   
+	<div class="col-sm-9" id="sec_vg">
+		<h3>VistaERP2 API: Voyager/put(get) <a href="#top">(top)</a></h3>
+		<div>
+			/api/Voyager/
+			<select id="op_vg" class="yellow">
+				<option value="put" selected>put</option>
+				<option value="get">get</option>				
+			</select>				
+			?s=<span class="yellow session"></span>
+			&data=<br/>
+<textarea id="data_vg" rows="20" cols="120">
+{
+"tables":{
+  "data": ["status","pumps","hoses"],
+  "status": ["sta_id","db","pi"],
+  "pumps": ["sta_id","pump_id","status"],
+  "hoses": ["sta_id","hose_id","hose_number","pump_id","grade_id","tank_id","volume","money"]
+},
+"status":[[1,1,1]],
+"pumps":[[1,1,"20"],[1,2,"20"],[1,3,"10"],[1,4,"20"]],
+"hoses":[[1,1,1,1,1,1,12345.30,3344,50],[1,2,2,1,1,1,34552.34,33452.45]]  
+}
+</textarea>			
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_vg">Submit</button>
+			<br/>
+		</div>
+		<div>
+		      <div id="json_vg"></div>
+		</div>
+						
+	</div>
+	
+	<div class="col-sm-9" id="sec_vgres">
+		<h3>VistaERP2 API: Data/resources <a href="#top">(top)</a></h3>
+		<div>
+			/api/Data/resources
+			<input type="text" id="op_vgres"  class="yellow" style="width:200px"/>
+			?s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_vgres">Submit</button>
+			<br/>
+		</div>
+		<div>
+		      <div id="json_vgres"></div>
+		</div>
+						
+	</div>	
+<div class="col-sm-9" id="sec_logs">
+		<h3>VistaERP2 API: Admin/logs <a href="#top">(top)</a></h3>
+		<div>
+			/api/Admin/logs/
+			<input type="text" id="op_logs_op2" class="yellow"/>
+			?s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_logs">Submit</button>
+			<br/>
+		</div>
+		<div>
+			<ul class="nav nav-tabs">
+			    <li class="active"><a data-toggle="tab" href="#home_log2">Columns</a></li>
+			    <li><a data-toggle="tab" href="#menulog_2">Source</a></li>
+			  </ul>
+			
+			  <div class="tab-content">
+			    <div id="home_log2" class="tab-pane fade in active">
+			     <div id="json_logs2"></div>
+			    </div>
+			    <div id="menulog_2" class="tab-pane fade">
+			      <div id="json_logs"></div>
+			    </div>
+			  </div>
+      
+		</div>
+						
+	</div>	  
+	<div class="col-sm-9" id="sec_config">
+		<h3>VistaERP2 API: Admin/config <a href="#top">(top)</a></h3>
+		<div>
+			/api/Admin/config/
+			<select id="op_config" class="yellow">
+				<option value="show" seleted>show</option>
+				<option value="set">set</option>
+				<option value="refresh">refresh</option>
+			</select>
+			?<select id="op_config2" class="yellow">
+				<option value="debug" selected>debug</option>
+				<option value="MA" >MA</option>
+				<option value="ERROR_NOROW" >ERROR_NOROW</option>
+				<option value="ERROR_PAGING" >ERROR_PAGING</option>
+				<option value="PAGESIZE" >PAGESIZE</option>
+			</select>=<input type="text" id="t_config2" class="yellow"/>			
+			&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_config">Submit</button>
+			<br/>
+		</div>
+		<div>
+			     <div id="json_config"></div>      
+		</div>
+						
+	</div>	  		 
+	<div class="col-sm-9" id="sec_util">
+		<h3>VistaERP2 API: Admin/util <a href="#top">(top)</a></h3>
+		<div>
+			/api/Admin/util/
+			<select id="op_util" class="yellow">
+				<option value="enz" seleted>enz</option>
+				<option value="dez">dez</option>
+			</select>
+			<br/>&p1=<textarea id="op_util2" rows="3" cols="80"></textarea>
+			<br/>&s=<span class="yellow session"></span>
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_util">Submit</button>
+			<br/>
+		</div>
+		<div>
+			     <div id="json_util"></div>      
+		</div>
+						
+	</div>	  	 	
+    <div class="col-sm-9" id="sec_reports">
+		<h3>VistaERP2 API: Auth/resources?type=reports <a href="#top">(top)</a></h3>
+		<div>
+			/api/Auth/resources?type=tables&file=reports.json
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_reports">Submit</button>
+		</div>
+		
+		<div id="jsonreports"></div>
+	</div>
+
+    <div class="col-sm-9" id="sec_reportparams">
+		<h3>VistaERP2 API: Report/params <a href="#top">(top)</a></h3>
+		<div>
+			/api/Report/params?_t= 
+			<select id="tableid" class="yellow tables">
+			</select>	
+			<br/>	
+			<button type="button" class="btn btn-primary" id="b_reportparams">Submit</button>
+			<span class="t_tablename"></span>
+			<br/>
+		</div>
+		
+		<div id="jsonreturn"></div>
+	</div>
+    	  
+  </div>
+</div>
+
+<footer class="container-fluid">
+  <p>Copyrights Vista Computing System</p>
+</footer>
+
+</body>
+
+<script>
+$(document).ready(function(){	
+	localStorage.clear();
+	$("#url").val(window.location.href.substring(0,window.location.href.indexOf('/help')));
+	$('#b_insert').hide();
+	$('#b_update').hide();
+	$('#b_delete').hide();
+	$('#b_report_exec').hide();
+	$('#b_process_exec').hide();
+	$('#sec_login').hide();
+	$('#sec_tables').hide();
+	$('#sec_columns').hide();
+	$('#sec_process_col').hide();
+	$('#sec_process_exec').hide();
+	$('#sec_report_col').hide();
+	$('#sec_report_exec').hide();
+	$('#sec_list').hide();
+	$('#sec_info').hide();
+	$('#sec_tree').hide();
+	$('#sec_treemove').hide();
+	$('#sec_dashboard').hide();
+	$('#sec_vg').hide();
+	$('#sec_vgres').hide();
+	$('#sec_logs').hide();
+	$('#sec_config').hide();
+	$('#sec_util').hide();
+	$('#sec_reports').hide();
+	$('#sec_reportparams').hide();
+	/*
+	  $("#url").click(function(){
+	    $(this).hide();
+	  });
+	*/
+$(".menu").click(function(){
+	var sec =$(this).attr('data');
+	$('#sec_login').hide();
+	$('#sec_tables').hide();
+	$('#sec_columns').hide();
+	$('#sec_process_col').hide();
+	$('#sec_process_exec').hide();
+	$('#sec_report_col').hide();
+	$('#sec_report_exec').hide();
+	$('#sec_list').hide();
+	$('#sec_info').hide();
+	$('#sec_tree').hide();
+	$('#sec_treemove').hide();
+	$('#sec_dashboard').hide();
+	$('#sec_vg').hide();
+	$('#sec_vgres').hide();
+	$('#sec_logs').hide();
+	$('#sec_config').hide();
+	$('#sec_util').hide();
+	$('#sec_reports').hide();
+	$('#sec_reportparams').hide();
+	$(sec).show();
+});
+
+$("#b_login").click(function(){
+	var t_url = $("#url").val();
+	var uid = $("#uid").val();
+	var pwd = $("#pwd").val();
+	var r = $("#role").val();
+	var cc = $("#cc").val();
+	var ap = $("#app").val();
+	var steid = $("#ste_id").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	var lid=$("#t_login").children("option:selected").val();
+
+	var url=t_url+'/api/Auth/'+lid;
+	if (lid=='login' || lid=='login2')
+		url=url+'?uid='+uid+'&pwd='+pwd+'&r='+r+'&_lg='+lg+'&_cc='+cc+'&app='+ap+'&ste_id='+steid;
+	else if (lid=='login3' || lid=='logout' || lid=='token')
+		url=url+'?s='+s+'&_lg='+lg;
+	else if (lid=='language')
+		url=url+'?s='+s+'&_lg='+lg;
+	//document.getElementById("jsonlogin").innerHTML = null;
+	$("#jsonlogin").html(null);
+	var jqxhr = $.get(url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonlogin").html(JSON.stringify(data));
+			  return;
+		  }
+		  if (lid=='login2' || lid=='login3') {
+			  //document.getElementById("s0").value = data.data.s;
+			  $("#s0").val(data.data.s);
+			  $(".session").html(data.data.s);
+		  }
+		  var textArea = $('<textarea id="tt_login" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#jsonlogin").append(textArea);		  
+		  if ($(".tables").children('option').length<1) {
+			  $(".tables").append('<option value="" label="">--Select Table---</option>');		  
+			  url=t_url+'/api/Auth/resources?type=tables&file=tables.json&_cc='+cc;			  
+			  $.get(url, function(data) {
+				  var tab_option='';
+				  var key =sortObjectKey(data);
+				  for (var x=0;x<key.length;x++) {
+				  //for (x in data) {
+					  var obj=data[key[x]];
+					  //$(".tables").append('<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>');		  
+					  //tab_option += '<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>';
+					  $(".tables").append('<option value="'+key[x]+'">'+key[x]+'</option>');		  
+					  tab_option += '<option value="'+key[x]+'">'+key[x]+'</option>';
+					  //console.log(data[x]);
+				  }
+			  });
+		  }
+		  if ($(".process").children('option').length<1) {
+			  $(".process").append('<option value="" label="">--Select Table---</option>');		  
+			  url=t_url+'/api/Auth/resources?type=process&file=processes.json&_cc='+cc;			  
+			  $.get(url, function(data) {
+				  var tab_option='';
+				  var key =sortObjectKey(data);
+				  for (var x=0;x<key.length;x++) {
+				  //for (x in data) {
+					  var obj=data[key[x]];
+					  //$(".tables").append('<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>');		  
+					  //tab_option += '<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>';
+					  $(".process").append('<option value="'+key[x]+'">'+key[x]+'</option>');		  
+					  tab_option += '<option value="'+key[x]+'">'+key[x]+'</option>';
+					  //console.log(data[x]);
+				  }
+			  });
+		  }
+		  if ($(".report").children('option').length<1) {
+			  $(".report").append('<option value="" label="">--Select Table---</option>');		  
+			  url=t_url+'/api/Auth/resources?type=report&file=reports.json&_cc='+cc;			  
+			  $.get(url, function(data) {
+				  var tab_option='';
+				  var key =sortObjectKey(data);
+				  for (var x=0;x<key.length;x++) {
+				  //for (x in data) {
+					  var obj=data[key[x]];
+					  //$(".tables").append('<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>');		  
+					  //tab_option += '<option value="'+key[x]+'" label="'+obj.label+'">'+key[x]+'</option>';
+					  $(".report").append('<option value="'+key[x]+'">'+key[x]+'</option>');		  
+					  tab_option += '<option value="'+key[x]+'">'+key[x]+'</option>';
+					  //console.log(data[x]);
+				  }
+			  });
+		  }  
+		}).fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		});		
+});
+
+$("#b_tables").click(function(){
+	var t_url = $("#url").val();
+	var cc = $("#cc").val();
+  var op1=$("#op_tables").val();
+  var op2=$("#op_tables2").val();
+  url=t_url+'/api/Auth/resources?type='+op1+'&file='+ op2+'&_cc='+cc; //tables.json';			  
+	$("#jsontables").html('');
+	
+	var jqxhr = $.get( url, function(data) {
+		  var key =sortObjectKey(data);
+			var table =  '<table class="table table-striped"><tr><th>table</th><th>label</th></tr>';
+			
+			for (var x=0;x<key.length;x++) {
+			//for (x in data) {	
+				var obj = data[key[x]];
+				if (obj.display=='Y') {
+				table = table + "<tr>"				
+					+ '<td>'+key[x]+'</td>'
+					+ '<td>'+obj.label+'</td>'
+					+ '</tr>';
+				}
+			}
+			
+			table = table + "</table>";
+			
+			$("#jsontables").html(table);
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+
+$("#b_column").click(function(){
+	var tid=$("#tableid").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	var col_op = $("#col_op").val();
+	$(".tables").val(tid);
+
+	const url=t_url+'/api/Data/'+col_op+'?_t='+tid+'&s='+s;
+	$("#jsonreturn").html('');
+	$("#t_tablename").html('');
+	
+	var jqxhr = $.get( url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonreturn").html(JSON.stringify(data));
+			  return;
+		  }
+			var jsonarray = null;
+			if (col_op=='model')
+				jsonarray = data.data.filters;
+			else
+				jsonarray = data.data.columns;
+			var table =  '<table class="table table-striped"><tr><th>field</th><th>label</th><th>type</th><th>isnull</th><th>readonly</th><th>isrange</th><th>default</th><th>note</th><th>link-table</th></tr>';
+			if (col_op=='columns')
+				table =  '<table class="table table-striped"><tr><th>field</th><th>label</th><th>type</th><th>isnull</th><th>insert</th><th>update</th><th>groupname</th><th>note</th><th>link-table</th></tr>';
+			for(var i = 0; i < jsonarray.length; i++) {
+				
+				var obj = jsonarray[i];
+				if (obj.display =='Y'){
+					let lb=obj.label;
+					table = table + "<tr>"				
+					+ '<td>'+obj.field
+					+'</td>'
+					+ '<td>'+lb+'</td>'
+					+ '<td>'+obj.type+'</td>'
+					+ '<td>'+obj.isnull+'</td>';
+					if (col_op=='columns')
+						table += '<td>'+obj.insert+'</td>'
+						+ '<td>'+obj.update+'</td>'
+						+'<td>'+(obj['groupname']===undefined ? '':obj['groupname'])+'</td>'
+						;
+					else {
+						table += '<td>'+obj.readonly+'</td>'
+						+ '<td>'+obj.isrange+'</td>'
+						+ '<td>'+obj.default+'</td>'
+						;
+					}
+					table += '<td>'+(obj['note']===undefined ? '':obj['note'])+'</td>'
+					+ '<td>'+(obj['link-table']===undefined ? '':obj['link-table'] + (obj['table-option']===undefined ? '': '<br/><font color="blue">table-option=</font>'+JSON.stringify(obj['table-option'])))+'</td>'
+					+ '</tr>';
+				}
+			}
+			
+			table = table + "</table>";
+			if (col_op !='model') {
+				table = '<a href="'+url+'" target="_blank">'+url+'</a>'+table;
+				
+			} else {
+				var tab1 =  '<table class="table table-striped">'
+					+'<tr><td width="15%">paging</td><td>'+data.data.paging+'</td></tr>'
+					+'<tr><td width="15%">pagesize</td><td>'+data.data.pagesize+'</td></tr>'
+					+'<tr><td width="15%">firstload</td><td>'+data.data.firstload+'</td></tr>'
+					+'<tr><td width="15%">permission</td><td>'+obj2str(data.data.permission)+'</td></tr>'
+					+'</table>';
+				table = '<a href="'+url+'" target="_blank">'+url+'</a>' + tab1
+				+ '<h4>filters</h4>'+table;
+
+				if (data.data['children'] !=undefined) {
+					var tab2 =  '<h4>children</h4><table class="table table-striped"><tr><th>label</th><th>_t</th><th>fk</th><th>permission</th></tr>';
+					jsonarray = data.data['children'];
+					for(var i = 0; i < jsonarray.length; i++) {
+						var obj = jsonarray[i];
+						tab2 += '<tr>'
+							+'<td>'+obj.label+'</td><td>'+obj['_t']+'</td><td>'+obj.fk+'</td><td>'+obj2str(obj.permission)+'</td>'
+							+'</tr>';
+					}
+					table += tab2+'</table>';
+				}
+				if (data.data['reports'] !=undefined) {
+					var tab2 =  '<h4>reports</h4><table class="table table-striped"><tr><th>label</th><th>_t</th></tr>';
+					jsonarray = data.data['reports'];
+					for(var i = 0; i < jsonarray.length; i++) {
+						var obj = jsonarray[i];
+						tab2 += '<tr>'
+							+'<td>'+obj.label+'</td><td>'+obj['_t']+'</td>'
+							+'</tr>';
+					}
+					table += tab2+'</table>';
+				}
+			}
+			$("#jsonreturn").html(table);
+			$(".t_tablename").html($("#tableid").children("option:selected").attr('label'));
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+$("#b_process_col").click(function(){
+	var tid=$("#processid").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	$(".process").val(tid);
+
+	const url=t_url+'/api/Process/filters?_t='+tid+'&s='+s;
+	$("#jsonprocess_col").html('');
+	$("#jsonprocess_col0").html('');
+	//$("#t_tablename").html('');
+	$('#b_process_exec').hide();
+	
+	var jqxhr = $.get( url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonprocess_col").html(JSON.stringify(data));
+			  return;
+		  }
+			var jsonarray = data.data.columns;
+		    localStorage.setItem('process-col', JSON.stringify(jsonarray));
+			var table =  '<table class="table table-striped"><tr><th>field</th><th>label</th><th>type</th><th>display</th><th>isnull</th><th>readonly</th><th>isrange</th><th>default</th><th>link-table</th><th>items</th></tr>';
+			
+			for(var i = 0; i < jsonarray.length; i++) {
+				
+				var obj = jsonarray[i];
+				//if (obj.display=='Y') 
+				{
+					let lb=obj.label;					
+					table = table + "<tr>"				
+					+ '<td>'+obj.field
+					+ (obj.isnull ? '' : '<font color="red">*</font>')
+					+'</td>'
+					+ '<td>'+lb+'</td>'
+					+ '<td>'+obj.type+'</td>'
+					+ '<td>'+obj.display+'</td>'
+					+ '<td>'+obj.isnull+'</td>'
+					+ '<td>'+obj.readonly+'</td>'
+					+ '<td>'+obj.isrange+'</td>'
+					//+ '<td>'+(obj['default']===undefined ? '' : obj['default']) +'</td>'
+					+ '<td><input id="p_'+obj.field+'" style="width:80px" '
+					+ (obj.readonly ?'  class="readonly" ':'')
+					+ 'value="'+(obj['default']===undefined ? '' : obj['default'])+'" type="text"/>'
+					+ (!obj.isrange ? '' :		
+					  '~~<input id="p_'+obj.field+'2" style="width:80px" '
+					+ (obj.readonly ?'  class="readonly" ':'')
+					+ 'value="'+(obj['default2']===undefined ? '' : obj['default2'])+'" type="text"/>'
+					) 
+					+ '</td>'
+					+ '<td>'+obj['link-table']+'</td>'
+					+ '<td>'+(obj['items']===undefined ? '' : JSON.stringify(obj['items'])) +'</td>'
+					+ '</tr>';
+				}
+			}
+			
+			table = table + "</table>";
+			
+			$("#jsonprocess_col").html(table);
+			$("#jsonprocess_col0").html('<a target="_blank" href="'+url+'">'+url+"</a>");
+			$('#b_process_exec').show();
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+$("#b_process_exec").click(function(){
+	var tid=$("#processid").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	$(".process").val(tid);
+
+	var cols=JSON.parse(localStorage.getItem('process-col'));
+	var pm="";
+	
+	if (cols==null) {
+		alert ('filter null');
+		return;
+	}
+	//$('#b_report_exec').hide();
+	
+	for(var i = 0; i < cols.length; i++) {
+		var col=cols[i];
+		var val=$('#p_'+col.field).val();
+		if (col.isrange) {
+			pm += '&' +col.field+'='+encodeURI(val)+'::'+$('#p_'+col.field+'2').val();
+		} else
+			pm += '&' +col.field+'='+encodeURI(val);
+	}
+	const url=t_url+'/api/Process/execute?_t='+tid
+			+pm
+			+'&s='+s;
+	//alert (url);
+  $("#jsonprocess_col0").html('<a target="_blank" href="'+url+'">'+url+'</a>');
+/*
+	var link = document.createElement('a');
+	link.href = url;
+	link.target='_blank';
+	document.body.appendChild(link);
+	link.click();  
+*/	
+});
+
+$("#b_process_exec0").click(function(){
+	var tid=$("#processid2").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	$(".process").val(tid);
+	var pm = $("#process_pm").val();
+
+	const url=t_url+'/api/Process/execute?_t='+tid+'&'+pm+'&s='+s;
+	$("#jsonprocess_exec").html('');
+	$("#jsonprocess_exec0").html('');
+	//$("#t_tablename").html('');
+	
+	var jqxhr = $.get( url, function(data) {
+		  console.log(data);
+ 		  $("#jsonprocess_exec").html(JSON.stringify(data));
+		  $("#jsonprocess_exec0").html('<a target="_blank" href="'+url+'">'+url+"</a>");
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+$("#b_report_col").click(function(){
+	var tid=$("#reportid").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	$(".report").val(tid);
+
+	const url=t_url+'/api/Report/filters?_t='+tid+'&s='+s;
+	$("#jsonreport_col").html('');
+	$("#jsonreport_col0").html('');
+	//$("#t_tablename").html('');
+	
+	$('#b_report_exec').hide();
+	var jqxhr = $.get( url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonreport_col").html(JSON.stringify(data));
+			  return;
+		  }
+			var jsonarray = data.data.columns;
+		    localStorage.setItem('report-col', JSON.stringify(jsonarray));
+			var table =  '<table class="table table-striped"><tr><th>field</th><th>label</th><th>type</th><th>display</th><th>isnull</th><th>readonly</th><th>isrange</th><th>default</th><th>link-table</th><th>items</th></tr>';
+			
+			for(var i = 0; i < jsonarray.length; i++) {
+				
+				var obj = jsonarray[i];
+				//if (obj.display=='Y') 
+				{
+					let lb=obj.label;					
+					table = table + "<tr>"				
+					+ '<td>'+obj.field
+					+ (obj.isnull ? '' : '<font color="red">*</font>')
+					+'</td>'
+					+ '<td>'+lb+'</td>'
+					+ '<td>'+obj.type+'</td>'
+					+ '<td>'+obj.display+'</td>'
+					+ '<td>'+obj.isnull+'</td>'
+					+ '<td>'+obj.readonly+'</td>'
+					+ '<td>'+obj.isrange+'</td>'
+					//+ '<td>'+(obj['default']===undefined ? '' : obj['default']) +'</td>'
+					+ '<td><input id="r_'+obj.field+'" style="width:100px" '
+					+ (obj.readonly ?'  class="readonly" ':'')
+					+ 'value="'+(obj['default']===undefined ? '' : obj['default'])+'" type="text"/>'
+					+ (!obj.isrange ? '' :		
+					  '~~<input id="r_'+obj.field+'2" style="width:80px" '
+					+ (obj.readonly ?'  class="readonly" ':'')
+					+ 'value="'+(obj['default2']===undefined ? '' : obj['default2'])+'" type="text"/>'
+					) 
+					+ '</td>'
+					+ '<td>'+obj['link-table']+'</td>'
+					+ '<td>'+(obj['items']===undefined ? '' : JSON.stringify(obj['items'])) +'</td>'
+					+ '</tr>';
+				}
+			}
+			
+			table = table + "</table>";
+			
+			$("#jsonreport_col").html(table);
+			$("#jsonreport_col0").html('<a target="_blank" href="'+url+'">'+url+"</a>");
+			$('#b_report_exec').show();
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+$("#b_report_exec").click(function(){
+	var tid=$("#reportid").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	var ct=$("#report_ct").val();
+	var cols=JSON.parse(localStorage.getItem('report-col'));
+	var pm="";
+	
+	if (cols==null) {
+		alert ('filter null');
+		return;
+	}
+	$(".report").val(tid);
+	//$('#b_report_exec').hide();
+	
+	for(var i = 0; i < cols.length; i++) {
+		var col=cols[i];
+		var val=$('#r_'+col.field).val();
+		if (col.isrange) {
+			pm += '&' +col.field+'='+encodeURI(val)+'::'+$('#r_'+col.field+'2').val();
+		} else
+			pm += '&' +col.field+'='+encodeURI(val);
+	}
+	const url=t_url+'/api/Report/execute?_t='+tid
+			+pm+'&_lg='+lg
+			+'&_ct='+ct+'&s='+s;
+	//alert (url);
+	$("#jsonreport_col0").html('');
+	  $("#jsonreport_col0").html('<a target="_blank" href="'+url+'">'+url+'</a>');
+
+	var link = document.createElement('a');
+	link.href = url;
+	link.target='_blank';
+	document.body.appendChild(link);
+	link.click();  
+	
+});
+$("#b_report_exec0").click(function(){
+	var tid=$("#reportid2").children("option:selected").val();
+	var t_url = $("#url").val();
+	var s = $("#s0").val();
+	var lg = $("#lang").val();
+	$(".report").val(tid);
+	var pm = $("#report_pm").val();
+	var ct = $("#report_ct").val();
+	const url=t_url+'/api/Report/execute?_t='+tid+'&'+pm+'&_ct='+ct+'&s='+s;
+	//alert (url);
+	$("#jsonreport_exec").html('');
+	  $("#jsonreport_exec").html('<a target="_blank" href="'+url+'">'+url+'</a>');
+
+	var link = document.createElement('a');
+	link.href = url;
+	link.target='_blank';
+	document.body.appendChild(link);
+	link.click();  
+	
+});
+
+$("#b_list").click(function(){
+
+	var tid=$("#tableid2").children("option:selected").val();
+	var t_url = $("#url").val();
+	$(".tables").val(tid);
+	var ss = $("#s0").val();
+	var op2 = $("#op2").val();
+	if (op2=='export_pdf')
+		op2='pdf';
+	else if (op2=='export_excel')
+		op2='xls';
+	var url=t_url+'/api/Data/'+(op2=='pdf' || op2=='xls' ? 'export':op2)
+		//+$("#op2").val()
+		+'?_t='+tid
+		+(op2=='pdf' || op2=='xls' ? '&_ot='+op2 : '')
+		;
+	var f=$("#f2_1").val();
+	var v=$("#f2_2").val();
+	if (f !='') url=url+'&'+f; //+'='+v;
+	
+	var rs=$("#rs_2").val();
+	var pi=$("#pi_2").val();
+	if (rs !='') url=url+'&_rs='+rs+'&_pi='+pi;
+    if ($('#st_2').val()!='')	url=url+'&_st='+$('#st_2').val();
+    
+	url=url+'&s='+ss;
+	console.log (url);
+	$("#jsonreturn2").html('');
+	
+	if (op2=='pdf' || op2=='xls' || op2=='export' || op2=='get') {
+		var link = document.createElement('a');
+		link.href = url;
+		link.target = '_blank';
+		document.body.appendChild(link);
+		link.click();  
+	   
+		$("#jsonreturn2").html('');
+  		$("#jsonreturn2_2").html('<a href="'+url+'" target="_blank">'+url+'</a>');
+		return;
+	}
+	
+	var jqxhr = $.get(url, function(data, textStatus, request) {
+		var h =request.getResponseHeader('content-type');
+		console.log('content-type',h);
+		  if (data.issuccess==0) {
+			  $("#jsonreturn2").html(JSON.stringify(data));
+			  $("#jsonreturn2_2").html(JSON.stringify(data));
+			  return;
+		  }
+		  var textArea = $('<textarea id="tt_2" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#jsonreturn2").append(textArea);
+		  var table='<table class="table table-striped"><tr>';
+		  var cols = data.data.columns;
+		  for (y in cols) {
+			  var cc=cols[y];
+		  	table+='<th><font size="2pt" color="blue">('+cc.field+')</font><br/>'+cc.label+'</th>';
+		  }
+		  table+='</tr>';
+
+		  for (x in data.data.list) {
+			  table+='<tr>';
+			  for (y in cols) {
+				  var cc=cols[y];
+				  var z = data.data.list[x];
+				  table+='<td>'+z[cc.field]+'</td>';
+			  }
+			  table+='</tr>';
+		  }
+		  /*
+		  for (x in data.data.list) {
+			  if (x==0) {
+				  for (y in data.data.list[x]) 
+				  	table+='<th>'+y+'</th>';
+				  table+='</tr>';
+			  }
+			  table+='<tr>';
+			  for (y in data.data.list[x]) {
+				  var z = data.data.list[x];
+				  table+='<td>'+z[y]+'</td>';
+			  }
+			  table+='</tr>';
+		  }
+		  */
+		  table+='</table>';
+		  $("#jsonreturn2_2").html(table);
+		  $(".t_tablename").html($("#tableid").children("option:selected").attr('label'));
+		  
+		  //$("#jsonreturn2").html('<textarea>'+JSON.stringify(data.data)+'</textarea');
+		  
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+});
+
+$("#b_info").click(function(){
+	var tid=$("#tableid3").children("option:selected").val();
+	var t_url = $("#url").val();
+	var lg = $("#lang").val();
+	$(".tables").val(tid);
+	var ss = $("#s0").val();
+	$(".session").html(ss);
+	$('#cmd').val('');
+
+	var cols=null;
+	var url=t_url+'/api/Data/columns?_t='+tid+'&s='+ss;
+	var jqcol = $.get(url, function(data) {
+		  //console.log(data);
+		  if (data.issuccess==0) {
+			  alert('Error:colums:'+data.message);
+			  return;
+		  }
+		  cols=data.data.columns;
+		  //console.log(cols);
+		  //$("#jsonreturn3").html(JSON.stringify(data.data));
+		  
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		    return;
+		  });		
+	var op3=$("#op3").val();
+	url=t_url+'/api/Data/'
+		+op3
+		+'?_t='+tid;
+	var f=$("#f3_1").val();
+	var v=$("#f3_2").val();
+	if (f !='') url=url+'&'+f+'='+v;
+		
+	url=url+'&s='+ss;
+	console.log (url);
+	$("#jsonreturn3").html('');
+	$("#jsonreturn3_2").html('');
+	$('#b_insert').hide();
+	$('#b_update').hide();
+	$('#b_delete').hide();
+	
+	var jqxhr = $.get(url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonreturn3").html(JSON.stringify(data));
+			  $("#jsonreturn3_2").html(JSON.stringify(data));
+			  return;
+		  }
+		  var textArea = $('<textarea id="tt_3" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#jsonreturn3").html(textArea);
+		  
+		  //console.log('columns',JSON.stringify(cols));
+		  $('#j_columns').val(JSON.stringify(cols));
+		  $('#j_info').val(JSON.stringify(data.data.info));
+			var table ='<table class="table table-striped"><tr><th>field</th><th>label</th><th>type</th><th>value</th><th>callout</th></tr>';
+			
+			for(var i = 0; i < cols.length; i++) {
+								
+				var obj = cols[i];
+				callout =(obj['callout']==undefined ? '' : '<button type="button" onclick="b_callout('+i+')">'+obj['callout']+'</button>');
+				//if (callout !='')
+				//	console.log(obj['field'],callout);
+				if (obj.display=='Y') {				
+					let lb=obj.label;
+					if (lg==='en' && obj.hasOwnProperty('i18n')) {
+						console.log(lg);
+						lb = obj.i18n.en;
+					}					
+					var row ='<td>'+obj.field+'</td>'
+						+ '<td>'+lb+'</td>'
+						+ '<td>'+obj.type+'</td>'
+						+ '<td><input id="'+obj.field+'" '
+						+(op3=='info' && !obj.update ?' readonly class="readonly" ':'')
+						+(op3!='info' && !obj.insert ?' readonly class="readonly" ':'')
+						+'value="'+data.data.info[obj.field]+'" type="text"/>'
+						+(obj['default']==undefined ? '': obj['default'].startsWith('@') && !obj['default'].startsWith('@current') ? '<br/>'+obj['default'] : '')
+						+(obj['link-table']==undefined || obj['link-table']=='' ? '': '<br/>'+obj['link-table']+(obj['table-option']===undefined ? '': '<br/><font color="blue">table-option=</font>'+JSON.stringify(obj['table-option'])))
+						+'</td>'
+						+'<td>'+callout+'</td>'
+						;
+						//console.log(row);
+					table +=  '<tr>'+row+'</tr>';
+					
+				}
+			}
+			
+			table = table + "</table>";
+			if (op3=='new' || op3=='copy') {
+				$('#b_insert').show();
+			} else {
+				$('#b_update').show();
+				$('#b_delete').show();
+			}
+		  
+		  $("#jsonreturn3_2").html(table);
+		  $(".t_tablename").html($("#tableid3").children("option:selected").attr('label'));
+		  
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+});
+
+$("#b_tree").click(function(){
+	var t_url = $("#url").val();
+	var tid = $("#op_tree").val();
+	var ss = $("#s0").val();
+
+	var cols=null;
+	var url=t_url+'/api/Data/tree?_t='+tid+'&s='+ss;
+	console.log (url);
+	$("#jsonreturn_tree0").html('');
+	$("#jsonreturn_tree").html('');
+	
+	var jqxhr = $.get(url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonreturn_tree").html(JSON.stringify(data));
+			  return;
+		  }
+		  var textArea = $('<textarea id="tt_tree" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#jsonreturn_tree").html(textArea);
+		  var a = document.createElement("a");
+		  a.appendChild(document.createTextNode(url));
+          a.href = url;
+          a.target = "_blank";
+          //a.download = "download.xls";
+  		  $("#jsonreturn_tree0").html(a);
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+});
+
+$("#b_treemove").click(function(){
+	var t_url = $("#url").val();
+	var tid = $("#op_treemove").val();
+	var ss = $("#s0").val();
+	var node = $("#node_id").val();
+	var parent = $("#parent").val();
+	var cols=null;
+	var url=t_url+'/api/Data/tree?_action=move&_t='+tid+'&id='+node+'&parent='+parent+'&s='+ss;
+	console.log (url);
+	$("#jsonreturn_treemove0").html('');
+	$("#jsonreturn_treemove").html('');
+	
+	var jqxhr = $.get(url, function(data) {
+		  console.log(data);
+		  if (data.issuccess==0) {
+			  $("#jsonreturn_treemove").html(JSON.stringify(data));
+			  return;
+		  }
+		  var textArea = $('<textarea id="tt_tree" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#jsonreturn_treemove").html(textArea);
+		  var a = document.createElement("a");
+		  a.appendChild(document.createTextNode(url));
+          a.href = url;
+          a.target = "_blank";
+          //a.download = "download.xls";
+  		  $("#jsonreturn_treemove0").html(a);
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+});
+
+$("#b_dashboard").click(function(){
+	var t_url = $("#url").val();
+	var tid = $("#dashboard_id").val();
+	var ss = $("#s0").val();
+
+	var cols=null;
+	var url=t_url+'/api/Dashboard/model?_t='+tid+'&s='+ss;
+    var a = document.createElement("a");
+     a.appendChild(document.createTextNode(url));
+     a.href = url;
+     a.target = "_blank";
+     //a.download = "download.xls";
+	  $("#jsonreturn_dash").html(a);
+
+});
+
+$("#b_insert").click(function(){
+	var t_url = $("#url").val();
+	if ($('#cmd').val()=='') {
+		var cols = JSON.parse($("#j_columns").val());
+		var info = JSON.parse($("#j_info").val());
+		var url='';
+		for(var i = 0; i < cols.length; i++) {
+			var col=cols[i];
+			var val=$('#'+col.field).val();
+			if (col.display=='Y')
+				url += '&' +col.field+'='+encodeURI(val); 
+		}
+		url = t_url+'/api/Data/insert?_t='+$(".tables").val()+url+'&s='+$("#s0").val();
+	    $("#jsonreturn3").text(url);
+	    $("#jsonreturn3_2").text(url);
+	    $('#cmd').val('insert');
+	} else {
+	    url=$("#jsonreturn3").text();
+	    call_api(url,'#jsonreturn3','#jsonreturn3_2');
+	    $('#cmd').val('');
+	    $('#b_insert').hide();
+	    $('#b_update').hide();
+	    $('#b_delete').hide();
+		console.log(url);
+	}
+});
+$("#b_update").click(function(){
+	var t_url = $("#url").val();
+	var cols = JSON.parse($("#j_columns").val());
+	var info = JSON.parse($("#j_info").val());
+	var url='';
+	for(var i = 0; i < cols.length; i++) {
+		var col=cols[i];
+		var val=$('#'+col.field).val();
+		if (val != info[col.field] && col.display=='Y')
+			url += '&' +col.field+'='+encodeURI(val); 
+	}
+	url  += '&'+$("#f3_1").val()+'='+$("#f3_2").val();
+	url = t_url+'/api/Data/update?_t='+$(".tables").val()+url+'&s='+$("#s0").val();
+	if ($('#cmd').val()=='') {
+	    $("#jsonreturn3").text(url);
+	    $("#jsonreturn3_2").text(url);
+	    $("#b_delete").hide();
+	    $('#cmd').val('update');
+	}else {
+	    url=$("#jsonreturn3").text();
+		call_api(url,'#jsonreturn3','#jsonreturn3_2');
+	    $('#cmd').val('');
+	    $('#b_insert').hide();
+	    $('#b_update').hide();
+	    $('#b_delete').hide();	    
+		console.log(url);
+	}	
+});
+$("#b_delete").click(function(){
+	var t_url = $("#url").val();
+	if ($('#cmd').val()=='') {
+		var cols = JSON.parse($("#j_columns").val());
+		var info = JSON.parse($("#j_info").val());
+		var url='';
+		url  = '&'+$("#f3_1").val()+'='+$("#f3_2").val();
+		url = t_url+'/api/Data/delete?_t='+$(".tables").val()+url+'&s='+$("#s0").val();
+		
+	    $("#jsonreturn3").text(url);
+	    $("#jsonreturn3_2").text(url);
+	    $("#b_update").hide();
+	    $('#cmd').val('delete');
+	} else {
+	    url=$("#jsonreturn3").text();
+	    call_api(url,'#jsonreturn3','#jsonreturn3_2');
+	    $('#cmd').val('');
+	    $('#b_insert').hide();
+	    $('#b_update').hide();
+	    $('#b_delete').hide();
+	    
+		console.log(url);
+	}
+});
+
+
+$("#b_vg").click(function(){
+	var t_url = $("#url").val();
+	var ss = $("#s0").val();
+	var op2 = $("#op_vg").val();
+	var url=t_url+'/api/Voyager/'+op2;
+	
+	var _dt=$("#data_vg").val();    
+	//url=url+'?s='+ss + '&data='+_dt;
+	//console.log (url);
+	
+	$("#json_vg").html('');
+	
+	var params = {"s":ss,"data":_dt};
+	
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		  $("#json_vg").html(JSON.stringify(data));		  
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });
+	
+});
+
+$("#b_vgres").click(function(){
+	var t_url = $("#url").val();
+	var ss = $("#s0").val();
+	var op2 = $("#op_vgres").val();
+	var op3 = '';
+	var url=t_url+'/api/Data/resources'+op2;
+
+	//url=url+'?s='+ss + '&data='+_dt;
+	//console.log (url);
+	
+	$("#json_vgres").html('');
+	
+	var params = {"s":ss};
+	
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		  //$("#json_logs").html(JSON.stringify(data));		  
+		  if (data.issuccess==0) {
+			  $("#json_vgres").html(JSON.stringify(data));
+			  return;
+		  }
+		  var table='<table class="table table-striped">';
+		  //console.log(data.data.list);
+			  for (x in data.data.list) {
+				  var ff=t_url+'/api/Data/resources'+(op2=='' ? '' : '/') + op2 +'/';
+				  table+='<tr><td><a href="'+ff+data.data.list[x]['name']+'?s='+ss+'" target="_blank">'+data.data.list[x]['name']+'</a></td></tr>';
+			  }
+		  table+='</table>';
+		  $("#json_vgres").html(table);
+		  
+	})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });
+	
+});
+
+
+$("#b_logs").click(function(){
+	var t_url = $("#url").val();
+	var ss = $("#s0").val();
+	var op2 = $("#op_logs_op2").val();
+	var op3 = '';
+	var url=t_url+'/api/Admin/logs'+(op2=='' ? '' : '/'+op2)+(op2=='' || op3=='' ? '' : '/'+op3);
+	
+	//url=url+'?s='+ss + '&data='+_dt;
+	//console.log (url);
+	
+	$("#json_logs").html('');
+	$("#json_logs2").html('');
+	
+	var params = {"s":ss};
+	
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		  //$("#json_logs").html(JSON.stringify(data));		  
+		  if (data.issuccess==0) {
+			  $("#json_logs").html(JSON.stringify(data));
+			  $("#json_logs2").html(JSON.stringify(data));
+			  return;
+		  }
+		  var textArea = $('<textarea id="log2_2" style="width:100%" rows="10"/>'); 
+		  textArea.html(JSON.stringify(data));
+		  $("#json_logs").append(textArea);
+		  var table='<table class="table table-striped">';
+		  //console.log(data.data.list);
+		  if (op3=='' || op2=='') {
+			  for (x in data.data.list) {
+				  var ff=t_url+'/api/Admin/logs/'+(op2=='' ? '' : op2+'/');
+				  table+='<tr><td><a href="'+ff+data.data.list[x]+'?s='+ss+'" target="_blank">'+(op2=='' ? '' : op2+'/')+data.data.list[x]+'</a></td></tr>';
+			  }
+		  } else {
+			  for (x in data.data.list) {
+				  if (x==0) {
+					  table +='<tr>';
+					  for (y in data.data.list[x]) 
+					  	table+='<th>'+y+'</th>';
+					  table+='</tr>';
+				  }
+				  table+='<tr>';
+				  for (y in data.data.list[x]) {
+					  var z = data.data.list[x];
+					  table+='<td>'+JSON.stringify(z[y])+'</td>';
+				  }
+				  table+='</tr>';
+			  }
+		  }
+		  table+='</table>';
+		  $("#json_logs2").html(table);
+		  
+	})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });
+	
+});
+
+
+$("#b_config").click(function(){
+	var t_url = $("#url").val();
+	var ss = $("#s0").val();
+	var op2 = $("#op_config").val();
+	var kk = $("#op_config2").val();
+	var vv = $("#t_config2").val();
+	var url=t_url+'/api/Admin/config'+(op2=='' ? '' : '/'+op2);
+	
+	//url=url+'?s='+ss + '&data='+_dt;
+	//console.log (url);
+	
+	$("#json_config").html('');
+	
+	var params = {"s":ss};
+	params[kk]=vv;
+	
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		  //$("#json_logs").html(JSON.stringify(data));		  
+		  $("#json_config").html(JSON.stringify(data));
+		  
+	})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });
+	
+});
+
+$("#b_util").click(function(){
+	var t_url = $("#url").val();
+	var ss = $("#s0").val();
+	var op2 = $("#op_util").val();
+	var p1 = $("#op_util2").val();
+	var url=t_url+'/api/Admin/util/'+op2;
+	
+	//url=url+'?s='+ss + '&data='+_dt;
+	//console.log (url);
+	
+	$("#json_util").html('');
+	
+	var params = {"s":ss};
+	params['p1']=encodeURI(p1);
+	
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		  //$("#json_logs").html(JSON.stringify(data));		  
+		  $("#json_util").html(JSON.stringify(data));
+		  
+	})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });
+	
+});
+
+$("#b_reports").click(function(){
+	var t_url = $("#url").val();
+	var cc = $("#cc").val();
+
+  url=t_url+'/api/Auth/resources?type=reports&file=reports.json&_cc='+cc;			  
+	$("#jsonreports").html('');
+	
+	var jqxhr = $.get( url, function(data) {
+		  var key =sortObjectKey(data);
+			var table =  '<table class="table table-striped"><tr><th>table</th><th>label</th></tr>';
+			
+			for (var x=0;x<key.length;x++) {
+			//for (x in data) {	
+				var obj = data[key[x]];
+				if (obj.display=='Y') {
+				table = table + "<tr>"				
+					+ '<td>'+key[x]+'</td>'
+					+ '<td>'+obj.label+'</td>'
+					+ '</tr>';
+				}
+			}
+			
+			table = table + "</table>";
+			
+			$("#jsonreports").html(table);
+		})
+		  .fail(function(err) {
+			console.log(err);
+		    alert( "error" );
+		  });		
+	
+});
+
+
+});
+
+function call_api(url,div,div2) {
+	var jqxhr = $.get(url, function(data) {
+		  if (div !=null) $(div).html(JSON.stringify(data));
+		  if (div2 !=null) $(div2).html(JSON.stringify(data));
+	}).fail(function(err) {
+		$(div).html(err);
+		$(div2).html(err);
+	});	
+}
+
+function sortObjectKey(myObj) {
+	  var keys = [];
+	  var k;
+
+	for (k in myObj) {
+	  if (myObj.hasOwnProperty(k)) {
+	    keys.push(k);
+	  }
+	}
+	keys.sort();
+	return keys;
+}
+
+function b_callout(idx) {
+	var t_url = $("#url").val();
+	var cols = JSON.parse($("#j_columns").val());
+	var info = JSON.parse($("#j_info").val());
+	var fld = cols[idx];
+	var url='&_type=change&_fld='+fld['field'];
+	var params = {'_t':$(".tables").val(),'_type':'change','_fld': fld['field']};
+	
+	for(var i = 0; i < cols.length; i++) {
+		var col=cols[i];
+		var val=$('#'+col.field).val();
+		if (col.display=='Y') {
+			url += '&' +col.field+'='
+			+(fld['field']==col['field'] ? '': encodeURI(val));
+			params[col.field] = (fld['field']==col['field'] ? '': encodeURI(val));
+			if (fld['field']==col['field']) {
+				url += '&_val='+encodeURI(val);
+				params['_val']=encodeURI(val);
+			}
+		}
+	}
+
+	url = t_url+'/api/Data/callout'; //?_t='+$(".tables").val()+url+'&s='+$("#s0").val();
+	params['s']=$("#s0").val();
+	//var jqxhr = $.get(url, function(data, textStatus, request) {
+	var jqxhr = $.post(url,params, function(data, textStatus, request) {
+		var h =request.getResponseHeader('content-type');
+		console.log('content-type',h);
+		  if (data.issuccess==0) {
+			  alert ('ERROR:'+data.message);
+			  return;
+		  }
+		  
+		  for (x in data.data.info) {
+			  console.log(x,data.data.info[x]);
+			  $('#'+x).val(data.data.info[x]);
+			} 		  
+		})
+	  .fail(function(err) {
+		console.log(err);
+	    alert( error );
+	  });	
+}
+
+function obj2str(obj) {
+	var s = '';
+	if (obj === undefined || obj=== null) return s;
+	for (var key in obj) {
+		s += (s==='' ? '' : ',') + key + ':'+obj[key];		
+	}
+	return '{'+s+'}';
+}
+
+</script>
+</html>
