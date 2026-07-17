@@ -160,6 +160,17 @@ function renderField(f) {
       break;
     }
     case 'resource': {
+      // editable: a combobox (text input + <datalist>) — pick from the list or type a custom value.
+      if (f.editable) {
+        const listId = 'rl-' + f.key + '-' + Math.random().toString(36).slice(2, 7);
+        const datalist = el('datalist', { id: listId, class: 'resource-datalist', 'data-resource': f.resource });
+        fillResourceDatalist(datalist, f.resource);
+        input = el('input', { type: 'text', class: 'resource-input', list: listId, 'data-resource': f.resource,
+          placeholder: f.placeholder || 'type or pick…', oninput: onChange, style: widthStyle(f) });
+        State.fieldEls[f.key] = input;
+        wrap.append(input, datalist);
+        return wrap;
+      }
       input = el('select', { class: 'resource-select', 'data-resource': f.resource, onchange: onChange });
       fillResourceSelect(input, f.resource);
       break;
@@ -200,6 +211,11 @@ function fillResourceSelect(sel, resourceName) {
   sel.append(el('option', { value: '' }, list.length ? '— select —' : '(login to load)'));
   for (const name of list) sel.append(el('option', { value: name }, name));
 }
+function fillResourceDatalist(dl, resourceName) {
+  const list = State.resources[resourceName] || [];
+  dl.innerHTML = '';
+  for (const name of list) dl.append(el('option', { value: name }));
+}
 
 /* ---------- URL / params assembly ---------- */
 function fieldValue(key) {
@@ -220,6 +236,10 @@ function assemble(ep) {
     if (f.in === 'path') {
       const seg = f.prefix && val ? f.prefix + val : val;
       path = path.replace('{' + f.key + '}', seg);
+      continue;
+    }
+    if (f.pathForOps && f.pathForOps.includes(fieldValue('op'))) {
+      if (val) path += '/' + (f.encode ? encodeURIComponent(val) : val);
       continue;
     }
     if (f.type === 'session') continue;
@@ -427,13 +447,10 @@ function filenameFromResponse(res) {
 async function flowRequest(ep) {
   const call = assemble(ep);
 
-  // download shortcuts (export / get / etc.) — real navigation, session goes in the query
-  if (ep.downloadWhen) {
-    const [[k, vals]] = Object.entries(ep.downloadWhen);
-    if (vals.includes(fieldValue(k))) {
-      const dl = appendSession(call.url);
-      openTab(dl); return renderResult(ep, { downloaded: dl });
-    }
+  // binary/text response (e.g. export → xlsx) — fetch with auth headers and save as a file, same call as list/get
+  if (ep.downloadOps && ep.downloadOps.includes(fieldValue('op'))) {
+    const ext = ep.downloadExt ? '.' + ep.downloadExt : '';
+    return flowDownload(ep, call, (fieldValue('_t') || fieldValue('op')) + ext);
   }
 
   const result = $('#result');
@@ -459,9 +476,14 @@ async function flowFilters(ep) {
   const cols = (r.json.data && r.json.data.columns) || [];
   result.innerHTML = '';
   result.append(resultHead(r));
+  // View = the parameter form + execute; Raw JSON = the /filters response (like Data/list).
+  buildTabs(result, r, () => buildFilterForm(ep, cols));
+}
 
-  const form = el('div', { class: 'filter-form' });
+// The parameter form + Execute controls. Execute calls /execute and dispatches by content-type.
+function buildFilterForm(ep, cols) {
   const inputs = {};
+  const box = el('div', { class: 'filter-row' });
   for (const c of cols) {
     const row = el('div', { class: 'form-field' });
     row.append(el('label', {}, c.field, c.isnull ? null : el('span', { class: 'req' }, '*'),
@@ -476,38 +498,81 @@ async function flowFilters(ep) {
       row.append(inB);
     }
     inputs[c.field] = { a: inA, b: inB, range: c.isrange };
-    form.append(row);
+    box.append(row);
   }
-  const box = el('div', { class: 'filter-row' });
-  cols.forEach(c => {}); // layout handled by CSS
-  form.querySelectorAll('.form-field').forEach(ff => box.append(ff));
 
   const ex = ep.execute;
-  const fmtSel = ex.format ? el('select', ...[{}].concat(ex.format.map(x => el('option', {}, x)))) : null;
+  const fmtSel = ex.format ? el('select', {}, ...ex.format.map(x => el('option', { value: x }, x))) : null;
+  const execUrl = el('div', { class: 'url-preview', style: 'display:block' });
+  const execOut = el('div', { class: 'result' });
 
-  const runExec = () => {
+  const runExecute = async () => {
     let pm = '';
     for (const c of cols) {
       const io = inputs[c.field];
       const v = encodeURIComponent(io.a.value);
-      pm += io.range ? `&${c.field}=${v}::${io.b.value}` : `&${c.field}=${v}`;
+      pm += io.range ? `&${c.field}=${v}::${encodeURIComponent(io.b.value)}` : `&${c.field}=${v}`;
     }
     let url = State.baseUrl + ex.path + '?_t=' + encodeURIComponent(fieldValue('_t')) + pm;
     if (ex.lang) url += '&_lg=' + State.lang;
     if (fmtSel) url += '&_ct=' + fmtSel.value;
-    url += '&s=' + State.session;
-    $('#execUrl').innerHTML = '';
-    $('#execUrl').append(el('span', { class: 'u-method' }, 'GET'),
-      el('a', { href: url, target: '_blank', rel: 'noopener' }, url),
+
+    execUrl.innerHTML = '';
+    execUrl.append(el('span', { class: 'u-method' }, 'GET'),
+      el('a', { href: appendSession(url), target: '_blank', rel: 'noopener' }, url),
       el('button', { class: 'copy', onclick: () => navigator.clipboard.writeText(url) }, 'copy'));
-    if (ex.mode === 'download') openTab(url);
+
+    execOut.innerHTML = loadingHtml();
+    try {
+      const res = await fetch(url, { method: 'GET', headers: authHeaders() });
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      // Detect the format from the RESPONSE, not the request: a document endpoint
+      // (Report _ct=pdf/xlsx) can still return a JSON error like {issuccess:0, message}.
+      const isDoc = /pdf|spreadsheet|officedocument|excel|msword|ms-excel|octet-stream|zip/.test(ct);
+      execOut.innerHTML = '';
+
+      if (isDoc) {                                            // real document → download (pdf / xlsx / xls)
+        const blob = await res.blob();
+        const name = filenameFromResponse(res) || ((fieldValue('_t') || 'export') + extFromCt(ct, fmtSel));
+        const href = URL.createObjectURL(blob);
+        const a = el('a', { href, download: name }); document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(href), 4000);
+        execOut.append(resultHead({ res }),
+          el('div', { class: 'banner info' }, `Downloaded “${name}” (${(blob.size / 1024).toFixed(1)} KB, ${blob.type || ct || 'binary'}).`));
+        return;
+      }
+
+      // Otherwise read the body and try JSON first (covers success JSON + error JSON), else show as text.
+      const text = await res.text();
+      let j = null;
+      try { j = JSON.parse(text); } catch (_) {}
+      if (j !== null && typeof j === 'object') {              // JSON → tree/text viewer (+ error banner)
+        execOut.append(resultHead({ res, json: j }));
+        if (j.issuccess === 0) execOut.append(el('div', { class: 'banner err' }, j.message || 'Failed'));
+        renderJson(execOut, j);
+      } else {                                                // plain text → inline with copy
+        execOut.append(resultHead({ res }), jsonViewer(text));
+      }
+    } catch (err) {
+      execOut.innerHTML = '';
+      execOut.append(el('div', { class: 'banner err' }, 'Execute failed: ' + err.message));
+    }
   };
 
-  const execBtn = el('button', { class: 'btn btn-success', onclick: runExec },
-    ex.mode === 'download' ? 'Execute & download' : 'Build execute URL');
+  const execBtn = el('button', { class: 'btn btn-success', onclick: runExecute }, 'Execute');
+  return el('div', {}, box,
+    el('div', { class: 'actions' }, execBtn, fmtSel ? el('div', { class: 'form-field' }, el('label', {}, 'format'), fmtSel) : null),
+    execUrl, execOut);
+}
 
-  result.append(box, el('div', { class: 'actions' }, execBtn, fmtSel || null),
-    el('div', { class: 'url-preview', id: 'execUrl', style: 'display:block' }));
+// Map the chosen format (Report _ct) or the response content-type to a download extension.
+function extFromCt(ct, fmtSel) {
+  if (fmtSel && fmtSel.value) return '.' + fmtSel.value;   // pdf / xlsx / xls
+  if (ct.includes('pdf')) return '.pdf';
+  if (ct.includes('sheet') || ct.includes('xlsx')) return '.xlsx';
+  if (ct.includes('excel')) return '.xls';
+  if (ct.includes('csv')) return '.csv';
+  return '';
 }
 
 /* ---------- flow: record CRUD (Data/info) ---------- */
@@ -525,8 +590,8 @@ async function flowRecord(ep) {
   const cols = colsR.json.data.columns;
 
   // 2. fetch record (info/new/copy)
-  let infoUrl = `${State.baseUrl}/api/Data/${op}?_t=${encodeURIComponent(table)}`;
-  if (pk) infoUrl += `&${pk}=${encodeURIComponent(pkv)}`;
+  let infoUrl = `${State.baseUrl}/api/Data/${op}/${encodeURIComponent(table)}`;
+  if (pk) infoUrl += `?${pk}=${encodeURIComponent(pkv)}`;
   const infoR = await sendRequest({ url: infoUrl, method: 'GET', headers: authHeaders() });
   if (!infoR.json || infoR.json.issuccess === 0) return renderResult(ep, infoR);
   const info = infoR.json.data.info || {};
@@ -568,16 +633,16 @@ async function flowRecord(ep) {
       if (c.display !== 'Y') continue;
       const v = inputs[c.field].value;
       if (changedOnly && String(v) === String(info[c.field] ?? '')) continue;
-      q += `&${c.field}=${encodeURIComponent(v)}`;
+      q += (q ? '&' : '?') + `${c.field}=${encodeURIComponent(v)}`;
     }
-    if (verb === 'update' || verb === 'delete') q += `&${pk}=${encodeURIComponent(pkv)}`;
-    return `${State.baseUrl}/api/Data/${verb}?_t=${encodeURIComponent(table)}${q}`;
+    if (verb === 'update' || verb === 'delete') q += (q ? '&' : '?') + `${pk}=${encodeURIComponent(pkv)}`;
+    return `${State.baseUrl}/api/Data/${verb}/${encodeURIComponent(table)}${q}`;
   };
   const doCrud = async (verb, changedOnly) => {
     const url = verb === 'delete'
-      ? `${State.baseUrl}/api/Data/delete?_t=${encodeURIComponent(table)}&${pk}=${encodeURIComponent(pkv)}`
+      ? `${State.baseUrl}/api/Data/delete/${encodeURIComponent(table)}?${pk}=${encodeURIComponent(pkv)}`
       : mkUrl(verb, changedOnly);
-    if (!confirm(verb.toUpperCase() + '?\n\n' + url)) return;
+    if (!confirm(verb + ' ?')) return;
     const r = await sendRequest({ url, method: 'GET', headers: authHeaders() });
     renderJsonBlock(result, r, url);
   };
@@ -702,7 +767,7 @@ async function flowRecordV2(ep) {
       if (verb === 'update') pkFields.forEach(f => { body[f] = pkVal(f); });
     }
     const url = `${State.baseUrl}/api/Data/${verb}/${encodeURIComponent(table)}`;
-    if (!confirm(verb.toUpperCase() + ' ' + table + '?\n\n' + JSON.stringify(body, null, 2))) return;
+    if (!confirm(verb + ' ?')) return;
     crudResult.innerHTML = loadingHtml();
     const cr = await sendRequest({ url, method: 'POST', body, headers: authHeaders(), json: true });
     crudResult.innerHTML = '';
@@ -764,9 +829,11 @@ async function loadResources() {
       if (r.json) State.resources[slot] = Object.keys(r.json).sort();
     } catch (_) {}
   }
-  // refresh any resource dropdowns currently on screen
+  // refresh any resource dropdowns / editable comboboxes currently on screen
   document.querySelectorAll('.resource-select').forEach(sel =>
     fillResourceSelect(sel, sel.dataset.resource));
+  document.querySelectorAll('.resource-datalist').forEach(dl =>
+    fillResourceDatalist(dl, dl.dataset.resource));
 }
 
 function updateSessionChip() {
@@ -783,11 +850,6 @@ const isOk = json => json && json.issuccess !== 0;
 function renderResult(ep, r, root) {
   const result = root || $('#result');
   result.innerHTML = '';
-  if (r.downloaded) {
-    result.append(el('div', { class: 'banner info' }, 'Opened download in a new tab.'),
-      el('div', { class: 'url-preview' }, el('a', { href: r.downloaded, target: '_blank' }, r.downloaded)));
-    return;
-  }
   result.append(resultHead(r));
 
   // Uniform error handling: surface the message, then the raw payload.
@@ -797,6 +859,9 @@ function renderResult(ep, r, root) {
     return;
   }
   if (!r.json) { renderJson(result, r.text); return; }
+
+  // Some ops within an endpoint show raw data only (e.g. Data/get), skipping the grid view.
+  if (ep.rawOps && ep.rawOps.includes(fieldValue('op'))) return renderJson(result, r.json);
 
   const mode = (ep.result && ep.result.mode) || 'json';
   switch (mode) {
@@ -886,7 +951,89 @@ function renderColumnTable(arr) {
 }
 
 function renderJson(root, data) {
-  root.append(el('pre', { class: 'json', html: highlight(data) }));
+  root.append(jsonViewer(data));
+}
+
+/* ---------- JSON viewer: Text / JSON-tree tabs + copy-to-clipboard ---------- */
+function jsonViewer(data) {
+  // Parse the structure for the tree; keep the original for the text view / copy.
+  let obj = data, isStruct = data != null && typeof data === 'object';
+  if (typeof data === 'string') {
+    try { obj = JSON.parse(data); isStruct = obj != null && typeof obj === 'object'; } catch (_) { isStruct = false; }
+  }
+  const copyText = typeof data === 'string' ? data : JSON.stringify(obj, null, 2);
+  const copyBtn = el('button', { class: 'jv-copy', type: 'button' }, 'Copy');
+  copyBtn.onclick = async () => {
+    try { await navigator.clipboard.writeText(copyText); copyBtn.textContent = 'Copied'; }
+    catch (_) { copyBtn.textContent = 'Failed'; }
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+  };
+
+  // Non-JSON payload (plain text / HTML error) — just show it, with a copy button.
+  if (!isStruct) {
+    return el('div', { class: 'jview' },
+      el('div', { class: 'jv-toolbar' }, el('span', { class: 'jv-spacer' }), copyBtn),
+      el('pre', { class: 'json' }, typeof data === 'string' ? data : String(data)));
+  }
+
+  const bTree = el('button', { class: 'jv-btn active', type: 'button' }, 'JSON tree');
+  const bText = el('button', { class: 'jv-btn', type: 'button' }, 'Text');
+  const pTree = el('div', { class: 'jv-panel active' }, jsonTree(obj));
+  const pText = el('pre', { class: 'json jv-panel', html: highlight(obj) });
+  const swap = tree => {
+    bTree.classList.toggle('active', tree); bText.classList.toggle('active', !tree);
+    pTree.classList.toggle('active', tree); pText.classList.toggle('active', !tree);
+  };
+  bTree.onclick = () => swap(true);
+  bText.onclick = () => swap(false);
+
+  return el('div', { class: 'jview' },
+    el('div', { class: 'jv-toolbar' }, bTree, bText, el('span', { class: 'jv-spacer' }), copyBtn),
+    pTree, pText);
+}
+
+// Collapsible JSON tree (DevTools-style). Expands the first few levels by default.
+function jsonTree(data) {
+  return el('div', { class: 'jtree' }, treeEntry(null, data, 0));
+}
+function treeEntry(key, value, depth) {
+  const keyLabel = key == null ? null : el('span', { class: 'jt-key' }, key + ':');
+  const isObj = value != null && typeof value === 'object';
+  if (!isObj) {
+    return el('div', { class: 'jt-node jt-leaf' }, el('div', { class: 'jt-line' }, keyLabel, treeValue(value)));
+  }
+  const entries = Array.isArray(value) ? value.map((v, i) => [String(i), v]) : Object.entries(value);
+  const toggle = el('span', { class: 'jt-toggle' });
+  const preview = el('span', { class: 'jt-preview' }, treePreview(value, entries));
+  const line = el('div', { class: 'jt-line' }, toggle, keyLabel, preview);
+  const children = el('div', { class: 'jt-children' }, ...entries.map(([k, v]) => treeEntry(k, v, depth + 1)));
+  const node = el('div', { class: 'jt-node' }, line, children);
+
+  let collapsed = depth > 2 && entries.length > 0;
+  const apply = () => { node.classList.toggle('collapsed', collapsed); toggle.textContent = collapsed ? '▸' : '▾'; };
+  line.onclick = () => { collapsed = !collapsed; apply(); };
+  apply();
+  return node;
+}
+function treeValue(v) {
+  let cls = 'jt-num', text = String(v);
+  if (v === null) { cls = 'jt-null'; text = 'null'; }
+  else if (typeof v === 'string') { cls = 'jt-str'; text = JSON.stringify(v); }
+  else if (typeof v === 'boolean') { cls = 'jt-bool'; }
+  return el('span', { class: 'jt-val ' + cls }, text);
+}
+function treePreview(value, entries) {
+  const [open, close] = Array.isArray(value) ? ['[', ']'] : ['{', '}'];
+  if (!entries.length) return open + close;
+  const parts = entries.slice(0, 3).map(([k, v]) => {
+    const label = Array.isArray(value) ? '' : k + ': ';
+    let vs;
+    if (v != null && typeof v === 'object') vs = Array.isArray(v) ? '[…]' : '{…}';
+    else if (typeof v === 'string') vs = JSON.stringify(v);
+    else vs = String(v);
+    return label + vs;
+  });
+  return `${open} ${parts.join(', ')}${entries.length > 3 ? ', …' : ''} ${close}`;
 }
 function renderJsonBlock(root, r, url) {
   root.append(el('div', { class: 'url-preview' }, el('span', { class: 'u-method' }, 'GET'),
@@ -981,7 +1128,7 @@ function buildTabs(root, r, renderView) {
   const tRaw = el('div', { class: 'tab' }, 'Raw JSON');
   tabs.append(tView, tRaw);
   const pView = el('div', { class: 'tab-panel active' }, renderView());
-  const pRaw = el('div', { class: 'tab-panel' }, el('pre', { class: 'json', html: highlight(r.json ?? r.text) }));
+  const pRaw = el('div', { class: 'tab-panel' }, jsonViewer(r.json ?? r.text));
   const swap = active => {
     tView.classList.toggle('active', active === 'v'); tRaw.classList.toggle('active', active === 'r');
     pView.classList.toggle('active', active === 'v'); pRaw.classList.toggle('active', active === 'r');
