@@ -238,6 +238,39 @@ pre.json {
 .json .b { color: #ff7b72; }
 .json .nl { color: #8b949e; }
 
+/* ---------- JSON viewer (Text / JSON tree + copy) ---------- */
+.jview { background: var(--code-bg); border-radius: var(--radius-sm); overflow: hidden; }
+.jv-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.jv-spacer { margin-left: auto; }
+.jv-btn, .jv-copy {
+  background: rgba(255, 255, 255, .08); border: none; color: var(--code-text);
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.jv-btn:hover, .jv-copy:hover { background: rgba(255, 255, 255, .16); }
+.jv-btn.active { background: var(--accent); color: #fff; }
+.jview pre.json { border-radius: 0; }
+.jv-panel { display: none; }
+.jv-panel.active { display: block; }
+
+.jtree {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--code-text);
+  padding: 12px 14px; overflow: auto; max-height: 520px;
+}
+.jt-children { padding-left: 16px; border-left: 1px solid rgba(255, 255, 255, .07); margin-left: 5px; }
+.jt-node.collapsed > .jt-children { display: none; }
+.jt-line { display: flex; align-items: flex-start; gap: 6px; white-space: pre-wrap; word-break: break-word; border-radius: 3px; }
+.jt-node:not(.jt-leaf) > .jt-line { cursor: pointer; }
+.jt-node:not(.jt-leaf) > .jt-line:hover { background: rgba(255, 255, 255, .05); }
+.jt-toggle { color: var(--text-muted); width: 12px; flex: none; user-select: none; text-align: center; }
+.jt-leaf .jt-line { padding-left: 18px; }
+.jt-preview { display: none; color: var(--text-muted); }
+.jt-node.collapsed > .jt-line .jt-preview { display: inline; }
+.jt-key { color: #79c0ff; flex: none; }
+.jt-val.jt-str { color: #a5d6ff; }
+.jt-val.jt-num { color: #7ee787; }
+.jt-val.jt-bool { color: #ff7b72; }
+.jt-val.jt-null { color: #8b949e; }
+
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.data th, table.data td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
